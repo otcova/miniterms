@@ -2,6 +2,7 @@ use super::utils::Parabola;
 use super::GameContext;
 use crate::image::{Image, ImageAnimation, Origin, Sprite};
 use crate::input::{Key, Keys};
+use crate::log;
 use crate::math::Pos;
 use crate::pixel_canvas::PixelCanvas;
 use crate::solution::Solution;
@@ -9,7 +10,6 @@ use rand::rngs::SmallRng;
 use rand::{Rng, RngCore, SeedableRng};
 use ratatui::style::Color;
 use std::collections::VecDeque;
-use std::fmt::Write;
 
 #[derive(Copy, Clone)]
 enum EnemyModel {
@@ -64,7 +64,7 @@ impl TRexGame {
         self.update_enemies();
 
         if self.collide(&self.trex, 0) {
-            let _ = writeln!(game, "Game Over");
+            log!("Game Over");
         }
 
         self.frame_count += 1;
@@ -210,6 +210,7 @@ impl TRex {
 impl TRexGame {
     pub fn draw(&self, canvas: &mut PixelCanvas) {
         canvas.draw(self.trex.sprite(self.frame_count));
+        canvas.draw(self.trex_solution.sprite(self.frame_count));
 
         // Draw enemies
         for enemy in &self.enemies {

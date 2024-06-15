@@ -1,6 +1,7 @@
 mod games;
 mod image;
 mod input;
+mod log;
 mod math;
 mod pixel_canvas;
 mod solution;
@@ -10,6 +11,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::log::log;
+use crate::log::LOG;
 use crossterm::{
     event::{self, Event, KeyCode, KeyEvent},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -25,7 +28,6 @@ use ratatui::{
     style::Color,
     symbols::Marker,
     terminal::{Frame, Terminal},
-    text::Text,
     widgets::{
         canvas::{Canvas, Map, MapResolution},
         Block, Paragraph, Widget,
@@ -42,7 +44,6 @@ struct App {
     keys: Keys,
     solution: Solution,
     close: bool,
-    log: Text<'static>,
 }
 
 impl App {
@@ -52,7 +53,6 @@ impl App {
             keys: Keys::new(),
             solution: Solution::new(),
             close: false,
-            log: Text::default(),
         }
     }
 
@@ -94,7 +94,7 @@ impl App {
     fn ui(&mut self, frame: &mut Frame) {
         use Constraint::*;
 
-        let log_width = if self.log.height() == 0 { 0 } else { 50 };
+        let log_width = if Self::log_is_empty() { 0 } else { 40 };
 
         let horizontal = Layout::horizontal([Length(log_width), Length(22), Fill(1), Fill(3)]);
         let [log_column, column_a, column_b, column_c] = horizontal.areas(frame.size());
@@ -120,10 +120,17 @@ impl App {
         self.solution.update();
     }
 
-    fn log_widget(&self, area: Size<u16>) -> impl Widget + '_ {
-        let scroll = (self.log.height() & !15).saturating_sub(area.height as usize + 17) as u16;
+    fn log_is_empty() -> bool {
+        let log = LOG.lock().unwrap();
+        log.height() == 0
+    }
 
-        Paragraph::new(self.log.clone())
+    fn log_widget(&self, area: Size<u16>) -> impl Widget + '_ {
+        let log = LOG.lock().unwrap();
+
+        let scroll = (log.height() & !0xFF).saturating_sub(area.height as usize + 17) as u16;
+
+        Paragraph::new(log.clone())
             .block(Block::bordered().title("Log"))
             .scroll((scroll, 0))
     }
@@ -145,20 +152,11 @@ impl App {
     fn trex_canvas(&mut self, canvas_size: Size<u16>) -> impl Widget + '_ {
         let size = Size::new(2 * (canvas_size.width - 2), 4 * (canvas_size.height - 2));
 
-        {
-            let mut log = String::new();
-
-            self.trex.update(&mut GameContext {
-                size,
-                keys: self.keys,
-                solution: &self.solution,
-                log: &mut log,
-            });
-
-            for line in log.lines() {
-                self.log.push_line(line.to_string());
-            }
-        }
+        self.trex.update(&mut GameContext {
+            size,
+            keys: self.keys,
+            solution: &self.solution,
+        });
 
         Canvas::default()
             .block(Block::bordered().title("T-Rex"))

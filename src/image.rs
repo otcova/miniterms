@@ -1,7 +1,6 @@
 use crate::math::{Line, Pos, Rect, Size};
 use ratatui::style::Color;
 use ratatui::widgets::canvas::Shape;
-use std::ops::Range;
 
 #[derive(Clone, Copy)]
 pub struct Image {

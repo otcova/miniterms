@@ -11,7 +11,7 @@ struct SolutionGenerator {
     random_generator: SmallRng,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum GeneratorPhase {
     Pause,
     LowFreq,
