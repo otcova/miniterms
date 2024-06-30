@@ -1,4 +1,5 @@
 use crate::input::{Key, Keys};
+use crate::log::log;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
@@ -13,28 +14,18 @@ struct SolutionGenerator {
 
 #[derive(Copy, Clone, Debug)]
 enum GeneratorPhase {
-    Pause,
     LowFreq,
     HighFreq,
 }
 
 impl GeneratorPhase {
     fn sample(rng: &mut SmallRng) -> GeneratorPhase {
-        use GeneratorPhase::*;
-        let weights = [(Pause, 1), (LowFreq, 10), (HighFreq, 20)];
-        let total_weight: u32 = weights.iter().map(|(_, w)| w).sum();
-
-        let mut random_result = rng.gen_range(0..total_weight);
-
-        for (phase, weight) in weights {
-            if random_result < weight {
-                return phase;
-            }
-            random_result -= weight;
+        match rng.gen_range(0..100) {
+            0..=29 => GeneratorPhase::LowFreq,
+            30..=99 => GeneratorPhase::HighFreq,
+            // SAFETY: gen_range(0..100) will always be in the 0..100 range
+            _ => unreachable!(),
         }
-
-        // unreachable!() // It really doesn't matter ...
-        Pause
     }
 }
 
@@ -42,7 +33,7 @@ impl SolutionGenerator {
     fn new() -> Self {
         Self {
             keys: Keys::new(),
-            phase: GeneratorPhase::Pause,
+            phase: GeneratorPhase::LowFreq,
             phase_time_left: 0,
             random_generator: SmallRng::from_seed(*b"This is a funny random seed !!!!"),
         }
@@ -60,9 +51,9 @@ impl SolutionGenerator {
         self.keys.update();
 
         match self.phase {
-            GeneratorPhase::Pause => {}
             GeneratorPhase::LowFreq => {
-                if self.random_generator.gen_range(0..50) == 0 {
+                log!("LowF");
+                if self.random_generator.gen_range(0..20) == 0 {
                     if self.keys.any_pressed() {
                         self.keys = Keys::new(); // Release all
                     } else {
@@ -72,9 +63,10 @@ impl SolutionGenerator {
                 }
             }
             GeneratorPhase::HighFreq => {
+                log!("HighF");
                 // Release keys
                 for _ in 0..4 {
-                    if self.random_generator.gen_range(0..20) < 0 {
+                    if self.random_generator.gen_range(0..2) < 0 {
                         let key = Key::from_u8(self.random_generator.gen_range(0..5));
                         self.keys.release(key);
                     }
@@ -82,7 +74,7 @@ impl SolutionGenerator {
 
                 // Press keys
                 for _ in 0..4 {
-                    if self.random_generator.gen_range(0..20) < 0 {
+                    if self.random_generator.gen_range(0..5) < 0 {
                         let key = Key::from_u8(self.random_generator.gen_range(0..5));
                         self.keys.press(key);
                     }
@@ -91,6 +83,18 @@ impl SolutionGenerator {
         }
 
         self.keys
+    }
+
+    fn random_key(&mut self) -> Key {
+        match self.random_generator.gen_range(0..100) {
+            0..=14 => Key::Up,
+            15..=29 => Key::Down,
+            30..=44 => Key::Left,
+            45..=59 => Key::Right,
+            60..=99 => Key::Space,
+            // SAFETY: gen_range(0..100) will always be in the 0..100 range
+            _ => unreachable!(),
+        }
     }
 }
 

@@ -64,7 +64,7 @@ impl TRexGame {
         self.update_enemies();
 
         if self.collide(&self.trex, 0) {
-            log!("Game Over");
+            // log!("Game Over");
         }
 
         self.frame_count += 1;

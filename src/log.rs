@@ -28,9 +28,8 @@ pub fn log_format(args: Arguments<'_>) {
 #[allow(unused)]
 macro_rules! log {
     () => {
-        log!("")
+        $crate::log::log_format(format_args!(""));
     };
-
     ($($arg:tt)*) => {{
         $crate::log::log_format(format_args!($($arg)*));
     }};
